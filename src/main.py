@@ -95,22 +95,22 @@ class MainApplication:
 		)
 		file_menu.add_separator()
 		file_menu.add_command(
-			label="Alterar", 
+			label="Alterar uma publicação", 
 			command=lambda: mod.AlterarDados(self.root)
 		)
 		file_menu.add_separator()
 		file_menu.add_command(
-			label="Excluir", 
+			label="Excluir uma publicação", 
 			command=lambda: ChildWindow(self.root, "Excluir empregado", "Aqui entra sua janela com\n\n\nlógica para excluir um empregado")
 		)
 		file_menu.add_separator()
 		file_menu.add_command(
-			label="Consultar por critério", 
+			label="Consultar publicação por critério", 
 			command=lambda: ChildWindow(self.root, "Consultar por critério", "Aqui entra sua janela com\n\n\nlógica para consultar um empregado por um critério")
 		)
 		file_menu.add_separator()
 		file_menu.add_command(
-			label="Consultar todos", 
+			label="Consultar todas as publiações", 
 			command=lambda: ChildWindow(self.root, "Consultar todos", "Aqui entra sua janela com\n\n\nlógica para consultar todos empregados")
 		)
 		file_menu.add_separator()
@@ -133,7 +133,7 @@ class MainApplication:
 		
 		ttk.Label(about_window, text="Gerenciador de Publicações", font=('Arial', 14)).pack(pady=10)
 		ttk.Label(about_window, text="Versão 1.0").pack()
-		ttk.Label(about_window, text="Desenvolvidos por ASMbleia\nAutora original: Alessandra Aguiar").pack(pady=10)
+		ttk.Label(about_window, text="Desenvolvido por ASMbleia\nAutora original: Alessandra Aguiar").pack(pady=10)
 		
 		ttk.Button(about_window, text="OK", command=about_window.destroy).pack(pady=20)
 
