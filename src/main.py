@@ -90,13 +90,13 @@ class MainApplication:
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Banco de dados", menu=file_menu)
         file_menu.add_command(
-            label="Inserir", 
+            label="Inserir uma publicação", 
             command=lambda: mod.InserirDados(self.root)
         )
         file_menu.add_separator()
         file_menu.add_command(
             label="Alterar", 
-            command=lambda: ChildWindow(self.root, "Alterar empregado", "Aqui entra sua janela com\n\n\nlógica para alterar um empregado")
+            command=lambda: mod.AlterarDados(self.root)
         )
         file_menu.add_separator()
         file_menu.add_command(
