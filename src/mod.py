@@ -14,313 +14,330 @@ from tkinter import ttk
 import mysql.connector
 
 class InserirDados:
-    def __init__(self, parent):
-        # FRAME E WINDOW PRINCIPAL
-        self.window = tk.Toplevel(parent)
-        self.window.title("Inserir uma nova publicação")
-        self.window.minsize(400, 350)
-        self.window.maxsize(400, 350)
-        self.window.resizable(False, False)
+	def __init__(self, parent):
+		# FRAME E WINDOW PRINCIPAL
+		self.window = tk.Toplevel(parent)
+		self.window.title("Inserir uma nova publicação")
+		self.window.minsize(400, 350)
+		self.window.maxsize(400, 350)
+		self.window.resizable(False, False)
 
-        main_frame: ttk.Frame = ttk.Frame(self.window, padding="10")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+		main_frame: ttk.Frame = ttk.Frame(self.window, padding="10")
+		main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # FRAME DOS INPUTS
-        conteudo_frame: ttk.Frame = ttk.Frame(main_frame)
-        conteudo_frame.pack(fill=tk.BOTH, expand=True)
+		# FRAME DOS INPUTS
+		conteudo_frame: ttk.Frame = ttk.Frame(main_frame)
+		conteudo_frame.pack(fill=tk.BOTH, expand=True)
 
-        # LABEL E INPUT DO ID DO LIVRO
-        id_label: ttk.Label = ttk.Label(conteudo_frame, text="ID do livro:", font=('Arial', 12))
-        id_label.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DO ID DO LIVRO
+		id_label: ttk.Label = ttk.Label(conteudo_frame, text="ID do livro:", font=('Arial', 12))
+		id_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.id_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.id_input.grid(row=0, column=1, pady=10, sticky="w")
+		self.id_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.id_input.grid(row=0, column=1, pady=10, sticky="w")
 
-        self.id_input.bind('<KeyPress>', self.verificar_caractere_ID)
-        self.id_input.bind('<KeyRelease>', self.verificar_caractere_ID)
+		self.id_input.bind('<KeyPress>', self.verificar_caractere_ID)
+		self.id_input.bind('<KeyRelease>', self.verificar_caractere_ID)
 
-        # LABEL E INPUT DO TÍTULO DO LIVRO
-        titulo_label: ttk.Label = ttk.Label(conteudo_frame, text="Título do livro:", font=('Arial', 12))
-        titulo_label.grid(row=1, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DO TÍTULO DO LIVRO
+		titulo_label: ttk.Label = ttk.Label(conteudo_frame, text="Título do livro:", font=('Arial', 12))
+		titulo_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
-        self.titulo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.titulo_input.grid(row=1, column=1, pady=10, sticky="w")
+		self.titulo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.titulo_input.grid(row=1, column=1, pady=10, sticky="w")
 
-        self.titulo_input.bind('<KeyPress>', self.verificar_caractere_titulo)
-        self.titulo_input.bind('<KeyRelease>', self.verificar_caractere_titulo)
+		self.titulo_input.bind('<KeyPress>', self.verificar_caractere_titulo)
+		self.titulo_input.bind('<KeyRelease>', self.verificar_caractere_titulo)
 
-        # LABEL E INPUT DO TIPO DO LIVRO
-        tipo_label: ttk.Label = ttk.Label(conteudo_frame, text="Tipo de livro:", font=('Arial', 12))
-        tipo_label.grid(row=2, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DO TIPO DO LIVRO
+		tipo_label: ttk.Label = ttk.Label(conteudo_frame, text="Tipo de livro:", font=('Arial', 12))
+		tipo_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
-        self.tipo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.tipo_input.grid(row=2, column=1, pady=10, sticky="w")
+		self.tipo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.tipo_input.grid(row=2, column=1, pady=10, sticky="w")
 
-        self.tipo_input.bind('<KeyPress>', self.verificar_caractere_tipo)
-        self.tipo_input.bind('<KeyRelease>', self.verificar_caractere_tipo)
+		self.tipo_input.bind('<KeyPress>', self.verificar_caractere_tipo)
+		self.tipo_input.bind('<KeyRelease>', self.verificar_caractere_tipo)
 
-        # LABEL E INPUT DA DATA DO LIVRO
-        data_label: ttk.Label = ttk.Label(conteudo_frame, text="Data de pub. do livro:", font=('Arial', 12))
-        data_label.grid(row=3, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DA DATA DO LIVRO
+		data_label: ttk.Label = ttk.Label(conteudo_frame, text="Data de pub. do livro:", font=('Arial', 12))
+		data_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
 
-        self.data_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.data_input.grid(row=3, column=1, pady=10, sticky="w")
+		self.data_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.data_input.grid(row=3, column=1, pady=10, sticky="w")
 
-        self.data_input.bind('<KeyPress>', self.verificar_caractere_data)
-        self.data_input.bind('<KeyRelease>', self.verificar_caractere_data)
+		self.data_input.bind('<KeyPress>', self.verificar_caractere_data)
+		self.data_input.bind('<KeyRelease>', self.verificar_caractere_data)
 
-        # LABEL DE ERRO
-        self.erro_label: ttk.Label = ttk.Label(conteudo_frame, text="", font=('Arial', 12), foreground="red", wraplength=350, justify="left", anchor="w")
-        self.erro_label.grid(row=4, column=0, columnspan=2, pady=10, sticky="we")
+		# LABEL DE ERRO
+		self.erro_label: ttk.Label = ttk.Label(conteudo_frame, text="", font=('Arial', 12), foreground="red", wraplength=350, justify="left", anchor="w")
+		self.erro_label.grid(row=4, column=0, columnspan=2, pady=10, sticky="we")
 
-        # BOTÕES
-        botoes_frame: ttk.Frame = ttk.Frame(main_frame)
-        botoes_frame.pack(fill=tk.X, pady=(20, 0))
+		# BOTÕES
+		botoes_frame: ttk.Frame = ttk.Frame(main_frame)
+		botoes_frame.pack(fill=tk.X, pady=(20, 0))
 
-        ok_button = ttk.Button(botoes_frame, text="Ok", command=lambda: self.input(self.id_input,self.titulo_input, self.tipo_input, self.data_input))
-        ok_button.pack(side=tk.RIGHT, padx=(5,0))
+		ok_button = ttk.Button(botoes_frame, text="Ok", command=lambda: self.input(self.id_input,self.titulo_input, self.tipo_input, self.data_input))
+		ok_button.pack(side=tk.RIGHT, padx=(5,0))
 
-        cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=self.window.destroy)
-        cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
+		cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=self.window.destroy)
+		cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
 
-    def verificar_caractere_ID(self, event) -> None:
-        tam: int = len(self.id_input.get("1.0", "end-1c"))
-        LIMITE_CHAR: int = 8
+	def verificar_caractere_ID(self, event) -> None:
+		tam: int = len(self.id_input.get("1.0", "end-1c"))
+		LIMITE_CHAR: int = 8
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return "break"
-        
-        if not (event.char.isdigit() or event.keysym == "BackSpace"):
-            return "break"
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return "break"
+		
+		if not (event.char.isdigit() or event.keysym == "BackSpace"):
+			return "break"
 
-    def verificar_caractere_data(self, event) -> None:
-        tam: int = len(self.data_input.get("1.0", "end-1c"))
-        char_formatacao: list = ['-', ' ', '/']
-        LIMITE_CHAR: int = 10
+	def verificar_caractere_data(self, event) -> None:
+		tam: int = len(self.data_input.get("1.0", "end-1c"))
+		char_formatacao: list = ['-', ' ', '/']
+		LIMITE_CHAR: int = 10
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return 'break'
-        
-        if (event.char.isdigit() or event.char in char_formatacao) or event.keysym == "BackSpace":
-            return
-        
-        return "break"
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return 'break'
+		
+		if (event.char.isdigit() or event.char in char_formatacao) or event.keysym == "BackSpace":
+			return
+		
+		return "break"
 
-    def verificar_caractere_titulo(self, event) -> None:
-        tam: int = len(self.titulo_input.get("1.0", "end-1c"))
-        LIMITE_CHAR: int = 80
+	def verificar_caractere_titulo(self, event) -> None:
+		tam: int = len(self.titulo_input.get("1.0", "end-1c"))
+		LIMITE_CHAR: int = 80
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return 'break'
-    
-    def verificar_caractere_tipo(self, event) -> None:
-        tam: int = len(self.tipo_input.get("1.0", "end-1c"))
-        LIMITE_CHAR: int = 12
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return 'break'
+	
+	def verificar_caractere_tipo(self, event) -> None:
+		tam: int = len(self.tipo_input.get("1.0", "end-1c"))
+		LIMITE_CHAR: int = 12
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return 'break'
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return 'break'
 
-    def verificar_formatacao_data(self, data: str) -> bool:
-        i: int = 1
-        char_formatacao: list = ['-', ' ', '/']
+	def verificar_formatacao_data(self, data: str) -> bool:
+		i: int = 1
+		char_formatacao: list = ['-', ' ', '/']
 
-        if len(data) != 10:
-            return False
+		if len(data) != 10:
+			return False
 
-        # formato correto: yyyy-mm-dd, yyyy mm dd, yyyy/mm/dd
-        for char in data:
-            if char.isnumeric() and (i <= 4 or (i >= 6 and i < 8) or i >= 9):
-                i += 1
-            elif char in char_formatacao and (i == 5 or i == 8):
-                i += 1
-            else:
-                return False
-        
-        if int(data[:4]) == 0 or (int(data[5:7]) == 0 or int(data[5:7]) > 12) or (int(data[9:]) == 0 or int(data[9:]) > 31):
-            return False
-        
-        return True
+		# formato correto: yyyy-mm-dd, yyyy mm dd, yyyy/mm/dd
+		for char in data:
+			if char.isnumeric() and (i <= 4 or (i >= 6 and i < 8) or i >= 9):
+				i += 1
+			elif char in char_formatacao and (i == 5 or i == 8):
+				i += 1
+			else:
+				return False
+		
+		if int(data[:4]) == 0 or (int(data[5:7]) == 0 or int(data[5:7]) > 12) or (int(data[9:]) == 0 or int(data[9:]) > 31):
+			return False
+		
+		return True
 
-    def erro(self, texto_erro: str):
-        self.erro_label.config(text=texto_erro)
+	def erro(self, texto_erro: str):
+		self.erro_label.config(text=texto_erro)
 
-    def input(self, id_text: tk.Text,titulo: tk.Text, tipo: tk.Text, data: tk.Text):
-        ID: str = id_text.get("1.0", "end-1c")
-        TITULO: str = titulo.get("1.0", "end-1c")
-        TIPO: str = tipo.get("1.0", "end-1c")
-        DATA: str = data.get("1.0", "end-1c")
+	def input(self, id_text: tk.Text,titulo: tk.Text, tipo: tk.Text, data: tk.Text):
+		ID: str = id_text.get("1.0", "end-1c")
+		TITULO: str = titulo.get("1.0", "end-1c").strip()
+		TIPO: str = tipo.get("1.0", "end-1c").strip()
+		DATA: str = data.get("1.0", "end-1c")
 
-        if len(ID) == 0 or len(TITULO) == 0 or len(TIPO) == 0 or len(DATA) == 0:
-            self.erro("Dados inválidos: algum(ns) campo(s) está(ão) vazio(s)")
-            return
-        elif not self.verificar_formatacao_data(DATA):
-            self.erro("Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
-            return
+		if len(ID) == 0 or len(TITULO) == 0 or len(TIPO) == 0 or len(DATA) == 0:
+			self.erro("Dados inválidos: algum(ns) campo(s) está(ão) vazio(s)")
+			return
+		elif not self.verificar_formatacao_data(DATA):
+			self.erro("Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
+			return
 
-        db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="serra",
-            database="publicacao"
-        )
+		db = mysql.connector.connect(
+			host="localhost",
+			user="root",
+			password="serra",
+			database="publicacao"
+		)
 
-        cursor = db.cursor()
+		cursor = db.cursor()
 
-        cursor.execute("INSERT INTO titulos (ID_TITULO, TITULO_LIVRO, TIPO_LIVRO, DATA_PUBLICACAO) VALUES (%s, %s, %s, %s)", (ID, TITULO, TIPO, DATA))
-        db.commit()
+		cursor.execute("INSERT INTO titulos (ID_TITULO, TITULO_LIVRO, TIPO_LIVRO, DATA_PUBLICACAO) VALUES (%s, %s, %s, %s)", (ID, TITULO, TIPO, DATA))
+		db.commit()
 
 class AlterarDados:
-    def __init__(self, parent):
-        # FRAME E WINDOW PRINCIPAL
-        self.window = tk.Toplevel(parent)
-        self.window.title("Alterar uma publicação")
-        self.window.minsize(400, 350)
-        self.window.maxsize(400, 350)
-        self.window.resizable(False, False)
+	def __init__(self, parent):
+		# FRAME E WINDOW PRINCIPAL
+		self.window = tk.Toplevel(parent)
+		self.window.title("Alterar uma publicação")
+		self.window.minsize(400, 350)
+		self.window.maxsize(400, 350)
+		self.window.resizable(False, False)
 
-        main_frame: ttk.Frame = ttk.Frame(self.window, padding="10")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+		main_frame: ttk.Frame = ttk.Frame(self.window, padding="10")
+		main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # FRAME DOS INPUTS
-        conteudo_frame: ttk.Frame = ttk.Frame(main_frame)
-        conteudo_frame.pack(fill=tk.BOTH, expand=True)
+		# FRAME DOS INPUTS
+		conteudo_frame: ttk.Frame = ttk.Frame(main_frame)
+		conteudo_frame.pack(fill=tk.BOTH, expand=True)
 
-        # LABEL E INPUT DO ID DO LIVRO
-        id_label: ttk.Label = ttk.Label(conteudo_frame, text="ID do livro:", font=('Arial', 12))
-        id_label.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DO ID DO LIVRO
+		id_label: ttk.Label = ttk.Label(conteudo_frame, text="ID do livro*:", font=('Arial', 12))
+		id_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.id_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.id_input.grid(row=0, column=1, pady=10, sticky="w")
+		self.id_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.id_input.grid(row=0, column=1, pady=10, sticky="w")
 
-        self.id_input.bind('<KeyPress>', self.verificar_caractere_ID)
-        self.id_input.bind('<KeyRelease>', self.verificar_caractere_ID)
+		self.id_input.bind('<KeyPress>', self.verificar_caractere_ID)
+		self.id_input.bind('<KeyRelease>', self.verificar_caractere_ID)
 
-        # LABEL E INPUT DO TÍTULO DO LIVRO
-        titulo_label: ttk.Label = ttk.Label(conteudo_frame, text="Título do livro:", font=('Arial', 12))
-        titulo_label.grid(row=1, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DO TÍTULO DO LIVRO
+		titulo_label: ttk.Label = ttk.Label(conteudo_frame, text="Título do livro:", font=('Arial', 12))
+		titulo_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
-        self.titulo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.titulo_input.grid(row=1, column=1, pady=10, sticky="w")
+		self.titulo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.titulo_input.grid(row=1, column=1, pady=10, sticky="w")
 
-        self.titulo_input.bind('<KeyPress>', self.verificar_caractere_titulo)
-        self.titulo_input.bind('<KeyRelease>', self.verificar_caractere_titulo)
+		self.titulo_input.bind('<KeyPress>', self.verificar_caractere_titulo)
+		self.titulo_input.bind('<KeyRelease>', self.verificar_caractere_titulo)
 
-        # LABEL E INPUT DO TIPO DO LIVRO
-        tipo_label: ttk.Label = ttk.Label(conteudo_frame, text="Tipo de livro:", font=('Arial', 12))
-        tipo_label.grid(row=2, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DO TIPO DO LIVRO
+		tipo_label: ttk.Label = ttk.Label(conteudo_frame, text="Tipo de livro:", font=('Arial', 12))
+		tipo_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
-        self.tipo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.tipo_input.grid(row=2, column=1, pady=10, sticky="w")
+		self.tipo_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.tipo_input.grid(row=2, column=1, pady=10, sticky="w")
 
-        self.tipo_input.bind('<KeyPress>', self.verificar_caractere_tipo)
-        self.tipo_input.bind('<KeyRelease>', self.verificar_caractere_tipo)
+		self.tipo_input.bind('<KeyPress>', self.verificar_caractere_tipo)
+		self.tipo_input.bind('<KeyRelease>', self.verificar_caractere_tipo)
 
-        # LABEL E INPUT DA DATA DO LIVRO
-        data_label: ttk.Label = ttk.Label(conteudo_frame, text="Data de pub. do livro:", font=('Arial', 12))
-        data_label.grid(row=3, column=0, padx=(0, 10), pady=10, sticky="w")
+		# LABEL E INPUT DA DATA DO LIVRO
+		data_label: ttk.Label = ttk.Label(conteudo_frame, text="Data de pub. do livro:", font=('Arial', 12))
+		data_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
 
-        self.data_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
-        self.data_input.grid(row=3, column=1, pady=10, sticky="w")
+		self.data_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
+		self.data_input.grid(row=3, column=1, pady=10, sticky="w")
 
-        self.data_input.bind('<KeyPress>', self.verificar_caractere_data)
-        self.data_input.bind('<KeyRelease>', self.verificar_caractere_data)
+		self.data_input.bind('<KeyPress>', self.verificar_caractere_data)
+		self.data_input.bind('<KeyRelease>', self.verificar_caractere_data)
 
-        # LABEL DE ERRO
-        self.erro_label: ttk.Label = ttk.Label(conteudo_frame, text="", font=('Arial', 12), foreground="red", wraplength=350, justify="left", anchor="w")
-        self.erro_label.grid(row=4, column=0, columnspan=2, pady=10, sticky="we")
+		# LABEL DE ERRO
+		self.erro_label: ttk.Label = ttk.Label(conteudo_frame, text="", font=('Arial', 12), foreground="red", wraplength=350, justify="left", anchor="w")
+		self.erro_label.grid(row=4, column=0, columnspan=2, pady=10, sticky="we")
 
-        # BOTÕES
-        botoes_frame: ttk.Frame = ttk.Frame(main_frame)
-        botoes_frame.pack(fill=tk.X, pady=(20, 0))
+		# BOTÕES
+		botoes_frame: ttk.Frame = ttk.Frame(main_frame)
+		botoes_frame.pack(fill=tk.X, pady=(20, 0))
 
-        ok_button = ttk.Button(botoes_frame, text="Ok", command=lambda: self.input(self.id_input,self.titulo_input, self.tipo_input, self.data_input))
-        ok_button.pack(side=tk.RIGHT, padx=(5,0))
+		ok_button = ttk.Button(botoes_frame, text="Ok", command=lambda: self.input(self.id_input,self.titulo_input, self.tipo_input, self.data_input))
+		ok_button.pack(side=tk.RIGHT, padx=(5,0))
 
-        cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=self.window.destroy)
-        cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
+		cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=self.window.destroy)
+		cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
 
-    def verificar_caractere_ID(self, event) -> None:
-        tam: int = len(self.id_input.get("1.0", "end-1c"))
-        LIMITE_CHAR: int = 8
+	def verificar_caractere_ID(self, event) -> None:
+		tam: int = len(self.id_input.get("1.0", "end-1c"))
+		LIMITE_CHAR: int = 8
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return "break"
-        
-        if not (event.char.isdigit() or event.keysym == "BackSpace"):
-            return "break"
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return "break"
+		
+		if not (event.char.isdigit() or event.keysym == "BackSpace"):
+			return "break"
 
-    def verificar_caractere_data(self, event) -> None:
-        tam: int = len(self.data_input.get("1.0", "end-1c"))
-        char_formatacao: list = ['-', ' ', '/']
-        LIMITE_CHAR: int = 10
+	def verificar_caractere_data(self, event) -> None:
+		tam: int = len(self.data_input.get("1.0", "end-1c"))
+		char_formatacao: list = ['-', ' ', '/']
+		LIMITE_CHAR: int = 10
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return 'break'
-        
-        if (event.char.isdigit() or event.char in char_formatacao) or event.keysym == "BackSpace":
-            return
-        
-        return "break"
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return 'break'
+		
+		if (event.char.isdigit() or event.char in char_formatacao) or event.keysym == "BackSpace":
+			return
+		
+		return "break"
 
-    def verificar_caractere_titulo(self, event) -> None:
-        tam: int = len(self.titulo_input.get("1.0", "end-1c"))
-        LIMITE_CHAR: int = 80
+	def verificar_caractere_titulo(self, event) -> None:
+		tam: int = len(self.titulo_input.get("1.0", "end-1c"))
+		LIMITE_CHAR: int = 80
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return 'break'
-    
-    def verificar_caractere_tipo(self, event) -> None:
-        tam: int = len(self.tipo_input.get("1.0", "end-1c"))
-        LIMITE_CHAR: int = 12
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return 'break'
+	
+	def verificar_caractere_tipo(self, event) -> None:
+		tam: int = len(self.tipo_input.get("1.0", "end-1c"))
+		LIMITE_CHAR: int = 12
 
-        if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
-            return 'break'
+		if tam >= LIMITE_CHAR and event.keysym not in {"BackSpace", "Delete"}:
+			return 'break'
 
-    def verificar_formatacao_data(self, data: str) -> bool:
-        i: int = 1
-        char_formatacao: list = ['-', ' ', '/']
+	def verificar_formatacao_data(self, data: str) -> bool:
+		i: int = 1
+		char_formatacao: list = ['-', ' ', '/']
 
-        if len(data) != 10:
-            return False
+		if len(data) != 10:
+			return False
 
-        # formato correto: yyyy-mm-dd, yyyy mm dd, yyyy/mm/dd
-        for char in data:
-            if char.isnumeric() and (i <= 4 or (i >= 6 and i < 8) or i >= 9):
-                i += 1
-            elif char in char_formatacao and (i == 5 or i == 8):
-                i += 1
-            else:
-                return False
-        
-        if int(data[:4]) == 0 or (int(data[5:7]) == 0 or int(data[5:7]) > 12) or (int(data[9:]) == 0 or int(data[9:]) > 31):
-            return False
-        
-        return True
+		# formato correto: yyyy-mm-dd, yyyy mm dd, yyyy/mm/dd
+		for char in data:
+			if char.isnumeric() and (i <= 4 or (i >= 6 and i < 8) or i >= 9):
+				i += 1
+			elif char in char_formatacao and (i == 5 or i == 8):
+				i += 1
+			else:
+				return False
+		
+		if int(data[:4]) == 0 or (int(data[5:7]) == 0 or int(data[5:7]) > 12) or (int(data[9:]) == 0 or int(data[9:]) > 31):
+			return False
+		
+		return True
 
-    def erro(self, texto_erro: str):
-        self.erro_label.config(text=texto_erro)
+	def erro(self, texto_erro: str):
+		self.erro_label.config(text=texto_erro)
 
-    def input(self, id_text: tk.Text,titulo: tk.Text, tipo: tk.Text, data: tk.Text):
-        ID: str = id_text.get("1.0", "end-1c")
-        TITULO: str = titulo.get("1.0", "end-1c")
-        TIPO: str = tipo.get("1.0", "end-1c")
-        DATA: str = data.get("1.0", "end-1c")
+	def input(self, id_text: tk.Text,titulo: tk.Text, tipo: tk.Text, data: tk.Text):
+		ID: str = id_text.get("1.0", "end-1c")
+		TITULO: str = titulo.get("1.0", "end-1c").strip()
+		TIPO: str = tipo.get("1.0", "end-1c").strip()
+		DATA: str = data.get("1.0", "end-1c")
 
-        if len(ID) == 0 or len(TITULO) == 0 or len(TIPO) == 0 or len(DATA) == 0:
-            self.erro("Dados inválidos: algum(ns) campo(s) está(ão) vazio(s)")
-            return
-        elif not self.verificar_formatacao_data(DATA):
-            self.erro("Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
-            return
+		if len(ID) == 0:
+			self.erro("Digite ID do livro que deseja alterar.")
+			return
+		elif len(TITULO) == 0 and len(TIPO) == 0 and len(DATA) == 0:
+			self.erro("Dados inválidos: todos os campos estão vazios")
+			return
+		elif len(DATA) > 0 and not(self.verificar_formatacao_data(DATA)):
+			self.erro("Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
+			return
 
-        db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="serra",
-            database="publicacao"
-        )
+		db = mysql.connector.connect(
+			host="localhost",
+			user="root",
+			password="root",
+			database="publicacao"
+		)
 
-        cursor = db.cursor()
+		cursor = db.cursor()
 
-        cursor.execute("INSERT INTO titulos (ID_TITULO, TITULO_LIVRO, TIPO_LIVRO, DATA_PUBLICACAO) VALUES (%s, %s, %s, %s)", (ID, TITULO, TIPO, DATA))
-        db.commit()
+		comando: str = "UPDATE titulos SET "
+
+		dados: dict = {
+			TITULO : "TITULO_LIVRO = ",
+			TIPO : "TIPO_LIVRO = ",
+			DATA : "DATA_PUBLICACAO = "
+		}
+
+		for (chave, valor) in dados.items():
+			if len(chave) > 0:
+				comando += valor + chave
+
+		comando += "WHERE ID_TITULO = " + ID
+
+		cursor.execute(comando)
+		db.commit()
