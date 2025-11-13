@@ -335,9 +335,10 @@ class AlterarDados:
 
 		for (chave, valor) in dados.items():
 			if len(chave) > 0:
-				comando += valor + chave
+				comando += valor + f"\'{chave}\',"
 
-		comando += "WHERE ID_TITULO = " + ID
+		comando = comando[:-1]
+		comando += f" WHERE ID_TITULO = {ID}"
 
 		cursor.execute(comando)
 		db.commit()
