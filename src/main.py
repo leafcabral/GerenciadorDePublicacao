@@ -5,7 +5,7 @@ ASMbleia
 	Rafael Cabral Lopes
 	Vitor Felberg Barcelos
 Serra, Brasil
-TODO TODO TODO TODO TODO TODO TODO TODO 
+Programa para gerenciamento de banco de dados sobre publicações de livros.
 
 Autora original: Alessandra Aguiar Vilarinho 
 """

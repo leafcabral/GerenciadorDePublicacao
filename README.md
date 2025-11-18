@@ -1,9 +1,10 @@
-# TITULO
+# Gerenciador de Publicações
 
-DESCRIÇÃO
+Projeto de criação de uma aplicação gráfica em Python utilizando a biblioteca *Tkinter* e com conexão ao banco de dados **MySql**.<br>
+Possui a função de gerenciar publicações de livros de uma biblioteca.
 
 ## Sobre Nós
-Esse projeto foi feito pela ASMbleia, sétima (7ª) equipe de desenvolvimento da disciplina de Programação IV do Curso de Informática para Internet, módulo (semestre) 4.
+Esse projeto foi feito pela ASMbleia, sétima (7ª) equipe de desenvolvimento da disciplina de Programação IV do Curso de Informática para Internet, módulo (semestre) 4.<br>
 Os integrantes são:
 - [Ian Caliel Matos Cabral](https://github.com/calielian)
 - [João Paulo Pipper da Silva](https://github.com/pipperjoaopaulo)
@@ -12,12 +13,12 @@ Os integrantes são:
 
 ## Formalidades
 Trabalho apresentado à disciplina de Programação IV do Curso de Informática para Internet do IFES campus Serra, como requisito parcial para a avaliação.
-Orientadora: Profa. Alessandra Aguiar Vilarinho
+Orientadora: Profa. Alessandra Aguiar Vilarinho.
 
 ## Requisitos
 - **Python X.Y** ou superior.
 - **Tkinter X.Y** ou superior.
-- **MySql Connector para Python** (pip install mysql-connector-python)
+- **MySql Connector para Python**
 - **MySql Server**
 
 ## Como instalar
@@ -37,4 +38,4 @@ python3 src/main.py
 ...
 
 ## Licença
-Este projeto está sob a Licença Pública Geral GNU (v3.0).
+Este projeto está sob a Licença Pública Geral GNU versão 3 (GPL v3.0).
