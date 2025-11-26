@@ -508,7 +508,7 @@ class DeletarDados:
 		conteudo_frame.pack(fill=tk.BOTH, expand=True)
 
 		# LABEL E INPUT DO ID DO LIVRO
-		id_label: ttk.Label = ttk.Label(conteudo_frame, text="ID do livro*:", font=('Arial', 12))
+		id_label: ttk.Label = ttk.Label(conteudo_frame, text="ID do livro:", font=('Arial', 12))
 		id_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
 		self.id_input: tk.Text = tk.Text(conteudo_frame, height=1, width=20)
