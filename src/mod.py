@@ -37,7 +37,7 @@ class MainApplication:
 		db = mysql.connector.connect(
 			host="localhost",
 			user="root",
-			password="serra"
+			password="Vitor2206@"
 		)
 		cursor = db.cursor()
 		cursor.execute(
@@ -108,7 +108,7 @@ class MainApplication:
 		file_menu.add_separator()
 		file_menu.add_command(
 			label="Consultar todas as publiações", 
-			command=lambda: ChildWindow(self.root, "Consultar todos", "Aqui entra sua janela com\n\n\nlógica para consultar todos empregados")
+			command=lambda: ConsultarDados(self.root)
 		)
 		file_menu.add_separator()
 		file_menu.add_command(label="Sair", command=self.root.quit)
@@ -308,7 +308,7 @@ class InserirDados:
 		db = mysql.connector.connect(
 			host="localhost",
 			user="root",
-			password="serra",
+			password="Vitor2206@",
 			database="publicacao"
 		)
 
@@ -590,7 +590,7 @@ class DeletarDados:
 		db = mysql.connector.connect(
 			host="localhost",
 			user="root",
-			password="serra",
+			password="Vitor2206@",
 			database="publicacao"
 		)
 
@@ -605,3 +605,38 @@ class DeletarDados:
 
 		cursor.execute(comando)
 		db.commit()
+
+class ConsultarDados:
+	def __init__(self, parent):
+		self.window = tk.Toplevel(parent)
+		self.window.title("Consultar publicações")
+		self.window.geometry("1000x750")
+
+		main_frame = ttk.Frame(self.window, padding="10")
+		main_frame.pack(fill=tk.BOTH, expand=True)
+
+		db = mysql.connector.connect(
+            host="localhost",
+            user="root",
+           	password="Vitor2206@",
+           	database="publicacao"
+		)
+
+		cursor = db.cursor()
+
+		cursor.execute("SELECT * FROM titulos")
+
+		columns = ("ID_TITULO", "TITULO_LIVRO", "TIPO_LIVRO",
+           	"ID_EDITORA", "PRECO", "TOTAL_VENDA",
+			"ROYALTY", "MEDIA_QUANT_VENDAS", "OBSERVACOES", "DATA_PUBLICACAO")
+		
+		tree = ttk.Treeview(main_frame, columns=columns, show="headings")
+
+		for col in columns:
+			tree.heading(col, text=col)
+			tree.column(col, width=10, anchor="center")
+
+		for row in cursor.fetchall():
+			tree.insert("", "end", values=row)
+
+		tree.pack(fill="both", expand=True)
