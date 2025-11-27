@@ -37,7 +37,7 @@ class MainApplication:
 		db = mysql.connector.connect(
 			host="localhost",
 			user="root",
-			password="Vitor2206@"
+			password="serra"
 		)
 		cursor = db.cursor()
 		cursor.execute(
@@ -308,7 +308,7 @@ class InserirDados:
 		db = mysql.connector.connect(
 			host="localhost",
 			user="root",
-			password="Vitor2206@",
+			password="serra",
 			database="publicacao"
 		)
 
@@ -590,7 +590,7 @@ class DeletarDados:
 		db = mysql.connector.connect(
 			host="localhost",
 			user="root",
-			password="Vitor2206@",
+			password="serra",
 			database="publicacao"
 		)
 
@@ -618,7 +618,7 @@ class ConsultarDados:
 		db = mysql.connector.connect(
             host="localhost",
             user="root",
-           	password="Vitor2206@",
+           	password="serra",
            	database="publicacao"
 		)
 
