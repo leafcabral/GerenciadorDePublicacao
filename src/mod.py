@@ -741,7 +741,9 @@ class MainApplication:
 			tree.insert('', tk.END, values=row)
 	#end_def
 
-	def mostrar_ajuda(self): pass
+	def mostrar_ajuda(self):
+		messagebox.showinfo("Como usar o Gerenciador", "Também não sei, boa sorte!")
+	#end_def
 	def mostrar_licenca(self): pass
 
 	def mostrar_sobre(self):
