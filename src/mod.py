@@ -314,6 +314,17 @@ Desenvolvido para atender às necessidades de editoras, bibliotecas e profission
 		window.title(title)
 		window.geometry(size)
 
+		# Não entendi direito, mas isso permite centralizar a janela
+		window.update_idletasks()
+		
+		width, height = map(int, size.split('x'))
+		x = (window.winfo_screenwidth() - width) // 2
+		y = (window.winfo_screenheight() - height) // 2
+		window.geometry(f"{width}x{height}+{x}+{y}")
+		
+		if not resizable:
+			window.resizable(False, False)
+
 		window.resizable(True, True)
 		if not resizable:
 			width, height = map(int, size.split('x'))
@@ -742,9 +753,30 @@ class MainApplication:
 	#end_def
 
 	def mostrar_ajuda(self):
-		messagebox.showinfo("Como usar o Gerenciador", "Também não sei, boa sorte!")
+		messagebox.showinfo("Como usar o Gerenciador", "Também não sabemos, boa sorte!")
 	#end_def
-	def mostrar_licenca(self): pass
+
+	def mostrar_licenca(self):
+		license_window = self.graphics_manager.create_window("Licença", "535x500", True)
+		
+		text_widget = tk.Text(
+			license_window,
+			wrap=tk.WORD,
+			font=('Courier New', 9),
+			bg='white'
+		)
+		scrollbar = ttk.Scrollbar(license_window, command=text_widget.yview)
+		text_widget.config(yscrollcommand=scrollbar.set)
+		
+		scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+		text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+		
+		with open("LICENSE", "r", encoding="utf-8") as file:
+			license_text = file.read()
+		
+		text_widget.insert("1.0", license_text)
+		text_widget.config(state=tk.DISABLED)
+	#end_def
 
 	def mostrar_sobre(self):
 		about_window = self.graphics_manager.create_window("Sobre a Aplicação", "500x400")
