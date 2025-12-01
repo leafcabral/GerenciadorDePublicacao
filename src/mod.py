@@ -10,9 +10,8 @@ Programa para gerenciamento de banco de dados sobre publicações de livros.
 Classe MainApplication originalmente por: Alessandra Aguiar Vilarinho.
 """
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import mysql.connector
-from webbrowser import open_new
 
 class DatabaseManager:
 	def __init__(self, host: str, user: str, password: str, database: str):
@@ -150,19 +149,31 @@ class GraphicsManager:
 		self.root.title("Gerenciador de Publicações")
 		self.root.geometry("800x600")
 		self.root.minsize(800, 600)
+		root.state('zoomed')
+		root.iconphoto(True, tk.PhotoImage(file='res/icon.png'))
 		
-		self.setup_layout()
-		self.setup_content()
+		self.root.tk.call('source', 'res/forest-light.tcl')
+		style = ttk.Style()
+		style.configure('.', font=('Segoe UI', 16), background='#f0f0f0')
+		style.configure('Treeview', font=('Segoe UI', 10))
 
-		#ttk.Style().theme_use('clam')
+		self.setup_navbar()
+		self.setup_main_screen()
+		self.status = {
+			'user': 'Conectado',
+			'database': 'publicacao'
+		}
+		self.statusbar = self.setup_statusbar()
 	#end_def
 
-	def setup_layout(self):
+	def setup_navbar(self):
 		menubar = tk.Menu(self.root)
 		self.root.config(menu=menubar)
 		
 		arq_menu = tk.Menu(menubar, tearoff=0)
 		menubar.add_cascade(label="Arquivo", menu=arq_menu)
+		arq_menu.add_command(label="Conectar ao banco de dados", command=self.main_app.conectar_banco)
+		arq_menu.add_separator()
 		arq_menu.add_command(label="Sair", command=self.root.quit)
 
 		titulo_menu = tk.Menu(menubar, tearoff=0)
@@ -206,36 +217,124 @@ class GraphicsManager:
 		)
 	#end_def
 
-	def setup_content(self):
+	def setup_main_screen(self):
 		main_frame = ttk.Frame(self.root, padding="10")
 		main_frame.pack(fill=tk.BOTH, expand=True)
 		
+		header_frame = ttk.Frame(main_frame)
+		header_frame.pack(fill=tk.X, pady=(0,20))
+
 		title_label = ttk.Label(
-			main_frame,
-			text="Bem-vindo(a) ao Gerenciador de Publicações!",
-			font=('Arial', 16, 'bold')
+			header_frame,
+			text="Gerenciador de Publicações",
+			font=('Segoe UI', 28, 'bold'),
+			foreground='#333333'
+		)
+		subtitle = ttk.Label(
+			header_frame,
+			font=('Segoe UI', 12),
+			text="Sistema de gerenciamento de banco de dados de livros",
 		)
 		title_label.pack()
-		
-		desc_label = ttk.Label(
-			main_frame,
-			text="Lorem ipsum",
-			font=('Arial', 12, 'bold')
-			)
-		desc_label.pack(pady=20)
-		
+		subtitle.pack(pady=(0, 50))
+
+		self.setup_content(main_frame)
+
 		footer_label = ttk.Label(
 			main_frame,
-			text="Lorem ipsum",
-			font=('Arial', 10, 'bold')
+			text="COPYLEFT 2025 ASMbleia • Desenvolvido por Ian, João, Rafael, Vitor • Serra, Brasil",
 		)
 		footer_label.pack(side=tk.BOTTOM, pady=10)
+	#end_def
+
+	def setup_content(self, parent: ttk.Frame):
+		content_frame = ttk.Frame(parent)
+		content_frame.place(anchor=tk.CENTER, relx=0.5, rely=0.5)
+		
+		left_frame = ttk.LabelFrame(
+			content_frame,
+			text="Sobre o Programa",
+			padding="15",
+			labelanchor='n'
+		)
+		left_frame.grid(row=0, column=0, sticky="nsew", padx=50)
+		info_text = """Este sistema oferece um controle completo sobre seu acervo de publicações, permitindo:\n
+• Cadastro detalhado de títulos com ID único
+• Classificação por tipo de publicação
+• Controle de datas de lançamento
+• Consultas flexíveis por múltiplos critérios
+• Gerenciamento seguro de dados\n
+Desenvolvido para atender às necessidades de editoras, bibliotecas e profissionais da área editorial, o sistema garante organização, segurança e eficiência no gerenciamento de publicações."""
+		info_label = ttk.Label(
+			left_frame,
+			text=info_text,
+			font=('Segoe UI', 10),
+			justify=tk.LEFT,
+			wraplength=350
+		)
+		info_label.pack(anchor=tk.W)
+		
+		right_frame = ttk.Frame(content_frame)
+		right_frame.grid(row=0, column=1, sticky="nsew", pady=(20,0))
+		
+		actions = [
+			("🔐 Conectar ao Banco", self.main_app.conectar_banco),
+			("➕ Inserir Título", self.main_app.inserir_titulo),
+			("✏️ Alterar Título", self.main_app.alterar_titulo),
+			("🗑️ Excluir Título", self.main_app.excluir_titulo),
+			("🔍 Consultar Todos os Títulos", self.main_app.consultar_titulos),
+			("📊 Consultar por Critério", self.main_app.consultar_titulo_criterio)
+		]
+		
+		for text, command in actions:
+			action_label = ttk.Label(
+				right_frame,
+				text=text,
+				font=('Segoe UI', 11),
+				cursor="hand2",
+				padding="8"
+			)
+			action_label.pack(anchor=tk.W, fill=tk.X, pady=1)
+			
+			def on_enter(event, label=action_label):
+				label.config(foreground="#217346")
+			def on_leave(event, label=action_label):
+				label.config(foreground="#333333")
+			def on_click(event, func=command):
+				func()
+			action_label.bind("<Enter>", on_enter)
+			action_label.bind("<Leave>", on_leave)
+			action_label.bind("<Button-1>", on_click)
+	#end_def
+
+	def setup_statusbar(self):
+		statusbar = ttk.Label(
+			self.root,
+			text=f"  Usuário: {self.status['user']} | Banco de Dados: {self.status['database']}",
+			relief=tk.SUNKEN,
+			anchor=tk.W,
+			font=('Segoe UI', 12),
+			background="#f0f0f0"
+		)
+		statusbar.pack(side=tk.BOTTOM, fill=tk.X, ipady=2)
+		return statusbar
 	#end_def
 
 	def create_window(self, title: str, size: str = "400x300", resizable: bool = False) -> tk.Toplevel:
 		window = tk.Toplevel(self.root)
 		window.title(title)
 		window.geometry(size)
+
+		# Não entendi direito, mas isso permite centralizar a janela
+		window.update_idletasks()
+		
+		width, height = map(int, size.split('x'))
+		x = (window.winfo_screenwidth() - width) // 2
+		y = (window.winfo_screenheight() - height) // 2
+		window.geometry(f"{width}x{height}+{x}+{y}")
+		
+		if not resizable:
+			window.resizable(False, False)
 
 		window.resizable(True, True)
 		if not resizable:
@@ -338,6 +437,10 @@ class MainApplication:
 			return False
 		
 		return True
+	#end_def
+
+	def conectar_banco(self):
+		messagebox.showerror("Conectar ao Banco", "Ainda não implementado")
 	#end_def
 
 	def inserir_titulo(self):
@@ -787,7 +890,70 @@ class MainApplication:
 			tree.insert('', tk.END, values=row)
 	#end_def
 
-	def mostrar_ajuda(self): pass
-	def mostrar_licenca(self): pass
-	def mostrar_sobre(self): pass
+	def mostrar_ajuda(self):
+		messagebox.showinfo("Como usar o Gerenciador", "Também não sabemos, boa sorte!")
+	#end_def
+
+	def mostrar_licenca(self):
+		license_window = self.graphics_manager.create_window("Licença", "535x500", True)
+		
+		text_widget = tk.Text(
+			license_window,
+			wrap=tk.WORD,
+			font=('Courier New', 9),
+			bg='white'
+		)
+		scrollbar = ttk.Scrollbar(license_window, command=text_widget.yview)
+		text_widget.config(yscrollcommand=scrollbar.set)
+		
+		scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+		text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+		
+		with open("LICENSE", "r", encoding="utf-8") as file:
+			license_text = file.read()
+		
+		text_widget.insert("1.0", license_text)
+		text_widget.config(state=tk.DISABLED)
+	#end_def
+
+	def mostrar_sobre(self):
+		about_window = self.graphics_manager.create_window("Sobre a Aplicação", "500x400")
+		
+		main_frame = ttk.Frame(about_window, padding=20)
+		main_frame.pack(fill=tk.BOTH, expand=True)
+
+		icon = tk.PhotoImage(file="res/icon.png").subsample(16)
+		icon_label = ttk.Label(main_frame, image=icon)
+		icon_label.image = icon
+		icon_label.pack(pady=10)
+
+		ttk.Label(
+			main_frame,
+			text="Gerenciador de Publicações",
+			font=('Segoe UI', 16, 'bold')
+		).pack()
+
+		ttk.Label(
+			main_frame,
+			text="Desenvolvido por ASMbleia",
+			font=('Segoe UI', 12)
+		).pack(pady=10)
+
+		ttk.Label(
+			main_frame,
+			text="""Ian Caliel Matos Cabral
+João Paulo Pipper da Silva
+Rafael Cabral Lopes
+Vitor Felberg Barcelos""",
+			font=('Segoe UI', 11),
+			justify=tk.CENTER
+		).pack(pady=10)
+
+		ttk.Label(
+			main_frame,
+			text="Serra, Brasil • 2024",
+			font=('Segoe UI', 10, 'italic'),
+			foreground="#7F8C8D"
+		).pack(pady=20)
+	#end_def
 #end_class
