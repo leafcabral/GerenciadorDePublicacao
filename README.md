@@ -2,6 +2,7 @@
 
 Projeto de criação de uma aplicação gráfica em Python utilizando a biblioteca *Tkinter* e com conexão ao banco de dados **MySql**.<br>
 Possui a função de gerenciar publicações de livros em uma biblioteca.
+A aplicação utiliza um tema personalizado para o *Tkinter*: [Forest theme for ttk](https://github.com/rdbende/Forest-ttk-theme/tree/master).
 
 ## Sobre Nós
 Esse projeto foi feito pela ASMbleia, sétima (7ª) equipe de desenvolvimento da disciplina de Programação IV do Curso de Informática para Internet, módulo (semestre) 4.<br>
@@ -16,8 +17,8 @@ Trabalho apresentado à disciplina de Programação IV do Curso de Informática 
 Orientadora: Profa. Alessandra Aguiar Vilarinho.
 
 ## Requisitos
-- **Python X.Y** ou superior.
-- **Tkinter X.Y** ou superior.
+- **[Python X.Y](https://www.python.org/)** ou superior.
+- **[Tkinter X.Y](https://docs.python.org/3/library/tkinter.html)** ou superior.
 - **[MySql Connector para Python](https://pypi.org/project/mysql-connector-python/)**
 - **[MySql Server](https://www.mysql.com/)**
 

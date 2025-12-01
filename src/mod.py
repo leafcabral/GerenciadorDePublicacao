@@ -149,7 +149,7 @@ class GraphicsManager:
 		self.root.title("Gerenciador de Publicações")
 		self.root.geometry("800x600")
 		self.root.minsize(800, 600)
-		root.state('zoomed')
+		root.attributes('-zoomed', True)
 		root.iconphoto(True, tk.PhotoImage(file='res/icon.png'))
 		
 		self.root.tk.call('source', 'res/forest-light.tcl')
