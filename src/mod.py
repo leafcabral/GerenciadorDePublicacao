@@ -11,6 +11,11 @@ Classe MainApplication originalmente por: Alessandra Aguiar Vilarinho.
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
+try:
+	import mysql.connector
+	mysql_available = True
+except ModuleNotFoundError:
+	mysql_available = False
 
 class DatabaseManager:
 	def __init__(self, host: str, user: str, password: str, database: str):
@@ -20,9 +25,7 @@ class DatabaseManager:
 		self.database = database
 		self.connection = None
 
-		try:
-			import mysql.connector
-		except ModuleNotFoundError:
+		if not mysql_available:
 			messagebox.showerror(
 				"Não foi possível encontrar dependência",
 				"""É necessário ter o mysql-connector instalado em sua máquina para utilizar esse programa.\n
@@ -39,6 +42,7 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 			user=self.user,
 			password=self.password
 		)
+
 		cursor = self.connection.cursor()
 		cursor.execute(
 			"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = %s",
@@ -175,10 +179,6 @@ class GraphicsManager:
 
 		self.setup_navbar()
 		self.setup_main_screen()
-		self.status = {
-			'user': 'Conectado',
-			'database': 'publicacao'
-		}
 		self.statusbar = self.setup_statusbar()
 	#end_def
 
@@ -324,16 +324,22 @@ Desenvolvido para atender às necessidades de editoras, bibliotecas e profission
 	#end_def
 
 	def setup_statusbar(self):
-		statusbar = ttk.Label(
+		self.statusbar = ttk.Label(
 			self.root,
-			text=f"  Usuário: {self.status['user']} | Banco de Dados: {self.status['database']}",
+			text="",
 			relief=tk.SUNKEN,
 			anchor=tk.W,
 			font=('Segoe UI', 12),
 			background="#f0f0f0"
 		)
-		statusbar.pack(side=tk.BOTTOM, fill=tk.X, ipady=2)
-		return statusbar
+		self.refresh_statusbar()
+
+		self.statusbar.pack(side=tk.BOTTOM, fill=tk.X, ipady=2)
+		return self.statusbar
+	#end_def
+	def refresh_statusbar(self):
+		text = " | ".join([f"{key}: {value}" for key, value in self.main_app.status.items()])
+		self.statusbar.config(text="  " + text)
 	#end_def
 
 	def create_window(self, title: str, size: str = "400x300", resizable: bool = False) -> tk.Toplevel:
@@ -379,44 +385,66 @@ Desenvolvido para atender às necessidades de editoras, bibliotecas e profission
 class MainApplication:
 	def __init__(self):
 		self.root = tk.Tk()
+		self.status = {
+			'Conectado': "❌",
+			'Usuário': 'Nenhum',
+			'Banco de Dados': 'Nenhum'
+		}
+		self.db_manager = None
+		self.gui_manager = GraphicsManager(self.root, self)
 
-		self.graphics_manager = GraphicsManager(self.root, self)
+		self.request_auth()
+	#end_def
 
-		input_user_senha = self.graphics_manager.create_window("Banco de dados")
+	def request_auth(self):
+		input_user_senha = self.gui_manager.create_window("Conectar ao banco de dado", "400x200")
+		input_user_senha.attributes('-topmost', True)
+		input_user_senha.grab_set() 
 
-		main_frame = self.graphics_manager.create_frame(input_user_senha)
+		main_frame = self.gui_manager.create_frame(input_user_senha)
 		main_frame.pack(fill=tk.BOTH, expand=True)
 		main_frame.grid_rowconfigure(3, weight=1)
 		main_frame.grid_columnconfigure(0, weight=1)
 
-		user_label = self.graphics_manager.create_label(main_frame, "Digite seu usuário:")
+		user_label = self.gui_manager.create_label(main_frame, "Digite seu usuário:")
 		user_label.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
-		user_input = self.graphics_manager.create_entry(main_frame)
+		user_input = self.gui_manager.create_entry(main_frame)
 		user_input.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
+		user_input.insert("1.0", "root")
+		user_input.bind("<Return>", lambda event: 'break')
 
-		senha_label = self.graphics_manager.create_label(main_frame, "Digite sua senha:")
-		senha_label.grid(row=1, column=0, padx=10, pady=10, sticky="nw")
-		senha_input = self.graphics_manager.create_entry(main_frame)
-		senha_input.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+		def on_senha_enter(event):
+			self.verificar_user_senha(user_input, senha_input, input_user_senha)
+			return 'break'
+		senha_label = self.gui_manager.create_label(main_frame, "Digite sua senha:")
+		senha_label.grid(row=1, column=0, padx=10, pady=(10,5), sticky="nw")
+		senha_input = self.gui_manager.create_entry(main_frame)
+		senha_input.grid(row=1, column=1, padx=10, pady=(10,5), sticky="ew")
+		senha_input.bind("<Return>", lambda event: on_senha_enter(event))
 
-		erro_label = self.graphics_manager.create_label(main_frame, "", font=('Arial', 12))
-		erro_label.config(wraplength=350, justify="left", anchor="w")
-		erro_label.grid(row=2, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
-
-		botao_frame = self.graphics_manager.create_frame(main_frame)
-		botao_frame.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="se")
-		botao = self.graphics_manager.create_button(botao_frame, "Ok", command=lambda:
-			self.verificar_user_senha(user_input, senha_input, erro_label, input_user_senha)
+		botao_frame = self.gui_manager.create_frame(main_frame)
+		botao_frame.grid(row=3, column=1, padx=10, pady=0, sticky="se")
+		botao = self.gui_manager.create_button(botao_frame, "Ok", command=lambda:
+			self.verificar_user_senha(user_input, senha_input, input_user_senha)
 		)
 		botao.pack(side=tk.RIGHT, padx=(5,0))
 	#end_def
 
-	def verificar_user_senha(self, user_input, senha_input, erro_label, window):
+	def verificar_user_senha(self, user_input, senha_input, window):
 		usuario: str = user_input.get("1.0", "end-1c")
 		senha: str = senha_input.get("1.0", "end-1c")
 
-		if len(usuario) == 0 or len(senha) == 0:
-			erro_label.config(text="Digite tanto o usuário quanto a senha.", foreground="red")
+		if not usuario or not senha:
+			window.grab_release()
+			window.attributes('-topmost', False)
+
+			messagebox.showwarning(
+				"Campos vazios",
+				"Por favor, preencha ambos os campos de usuário e senha."
+			)
+
+			window.attributes('-topmost', True)
+			window.grab_set() 
 			return
 
 		self.db_manager = DatabaseManager(
@@ -428,9 +456,31 @@ class MainApplication:
 
 		try:
 			self.db_manager.connect()
+
+			self.status['Usuário'] = usuario
+			self.status['Banco de Dados'] = "publicacao"
+			self.status['Conectado'] = "✔"
+			self.gui_manager.refresh_statusbar()
+
+			window.grab_release()
+			window.attributes('-topmost', False)
+			messagebox.showinfo(
+				"Conectado com sucesso",
+				"Conexão ao banco de dados realizada com sucesso!"
+			)
+
 			window.destroy()
 		except:
-			erro_label.config(text="Digite um usuário ou senha válidos.", foreground="red")
+			window.grab_release()
+			window.attributes('-topmost', False)
+
+			messagebox.showerror(
+				"Erro de autenticação",
+				"Não foi possível conectar ao banco de dados com o usuário e senha fornecidos."
+			)
+
+			window.attributes('-topmost', True)
+			window.grab_set() 
 	#end_def
 
 	def verificar_formatacao_data(self, data: str) -> bool:
@@ -456,74 +506,74 @@ class MainApplication:
 	#end_def
 
 	def conectar_banco(self):
-		messagebox.showerror("Conectar ao Banco", "Ainda não implementado")
+		self.request_auth()
 	#end_def
 
 	def inserir_titulo(self):
-		window = self.graphics_manager.create_window("Inserir Título", "400x600", False)
+		window = self.gui_manager.create_window("Inserir Título", "400x600", False)
 		window.grid_rowconfigure(0, weight=1)
 		window.grid_columnconfigure(0, weight=1)
 
-		main_frame = self.graphics_manager.create_frame(window)
+		main_frame = self.gui_manager.create_frame(window)
 		main_frame.pack(fill=tk.BOTH, expand=True)
 		main_frame.grid_rowconfigure(10, weight=1)
 		main_frame.grid_columnconfigure(0, weight=1)
 
-		id_label = self.graphics_manager.create_label(main_frame, "ID do livro*:")
+		id_label = self.gui_manager.create_label(main_frame, "ID do livro*:")
 		id_label.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
-		id_input = self.graphics_manager.create_entry(main_frame)
+		id_input = self.gui_manager.create_entry(main_frame)
 		id_input.grid(row=0, column=1, pady=10, sticky="ew")
 
-		titulo_label = self.graphics_manager.create_label(main_frame, "Título do livro*:")
+		titulo_label = self.gui_manager.create_label(main_frame, "Título do livro*:")
 		titulo_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-		titulo_input = self.graphics_manager.create_entry(main_frame)
+		titulo_input = self.gui_manager.create_entry(main_frame)
 		titulo_input.grid(row=1, column=1, pady=10, sticky="ew")
 
-		tipo_label = self.graphics_manager.create_label(main_frame, "Tipo de livro*:")
+		tipo_label = self.gui_manager.create_label(main_frame, "Tipo de livro*:")
 		tipo_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-		tipo_input = self.graphics_manager.create_entry(main_frame)
+		tipo_input = self.gui_manager.create_entry(main_frame)
 		tipo_input.grid(row=2, column=1, pady=10, sticky="ew")
 
-		data_label = self.graphics_manager.create_label(main_frame, "Data de pub. do livro*:")
+		data_label = self.gui_manager.create_label(main_frame, "Data de pub. do livro*:")
 		data_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
-		data_input = self.graphics_manager.create_entry(main_frame)
+		data_input = self.gui_manager.create_entry(main_frame)
 		data_input.grid(row=3, column=1, pady=10, sticky="ew")
 
-		id_ed_label = self.graphics_manager.create_label(main_frame, "ID da editora:")
+		id_ed_label = self.gui_manager.create_label(main_frame, "ID da editora:")
 		id_ed_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
-		id_ed_input = self.graphics_manager.create_entry(main_frame)
+		id_ed_input = self.gui_manager.create_entry(main_frame)
 		id_ed_input.grid(row=4, column=1, pady=10, sticky="ew")
 
-		preco_label = self.graphics_manager.create_label(main_frame, "Preço do livro:")
+		preco_label = self.gui_manager.create_label(main_frame, "Preço do livro:")
 		preco_label.grid(row=5, column=0, padx=10, pady=10, sticky="w")
-		preco_input = self.graphics_manager.create_entry(main_frame)
+		preco_input = self.gui_manager.create_entry(main_frame)
 		preco_input.grid(row=5, column=1, pady=10, sticky="ew")
 
-		total_venda_label = self.graphics_manager.create_label(main_frame, "Total da venda:")
+		total_venda_label = self.gui_manager.create_label(main_frame, "Total da venda:")
 		total_venda_label.grid(row=6, column=0, padx=10, pady=10, sticky="w")
-		total_venda_input = self.graphics_manager.create_entry(main_frame)
+		total_venda_input = self.gui_manager.create_entry(main_frame)
 		total_venda_input.grid(row=6, column=1, pady=10, sticky="ew")
 
-		royalty_label = self.graphics_manager.create_label(main_frame, "Royalty:")
+		royalty_label = self.gui_manager.create_label(main_frame, "Royalty:")
 		royalty_label.grid(row=7, column=0, padx=10, pady=10, sticky="w")
-		royalty_input = self.graphics_manager.create_entry(main_frame)
+		royalty_input = self.gui_manager.create_entry(main_frame)
 		royalty_input.grid(row=7, column=1, pady=10, sticky="ew")
 
-		med_qtd_vendas_label = self.graphics_manager.create_label(main_frame, "Média da qtd de vendas:")
+		med_qtd_vendas_label = self.gui_manager.create_label(main_frame, "Média da qtd de vendas:")
 		med_qtd_vendas_label.grid(row=8, column=0, padx=10, pady=10, sticky="w")
-		med_qtd_vendas_input = self.graphics_manager.create_entry(main_frame)
+		med_qtd_vendas_input = self.gui_manager.create_entry(main_frame)
 		med_qtd_vendas_input.grid(row=8, column=1, pady=10, sticky="ew")
 
-		observacoes_label = self.graphics_manager.create_label(main_frame, "Observações:")
+		observacoes_label = self.gui_manager.create_label(main_frame, "Observações:")
 		observacoes_label.grid(row=9, column=0, padx=10, pady=10, sticky="w")
-		observacoes_input = self.graphics_manager.create_entry(main_frame)
+		observacoes_input = self.gui_manager.create_entry(main_frame)
 		observacoes_input.grid(row=9, column=1, pady=10, sticky="ew")
 
-		erro_label = self.graphics_manager.create_label(main_frame, "", font=('Arial', 12))
+		erro_label = self.gui_manager.create_label(main_frame, "", font=('Arial', 12))
 		erro_label.config(foreground="red", wraplength=350, justify="left", anchor="w")
 		erro_label.grid(row=10, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
 
-		botoes_frame = self.graphics_manager.create_frame(main_frame, padding=0)
+		botoes_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		botoes_frame.grid(row=11, column=0, columnspan=2, padx=10, pady=10, sticky="se")
 		ok_button = ttk.Button(
 			botoes_frame,
@@ -599,71 +649,71 @@ class MainApplication:
 	#end_def
 
 	def alterar_titulo(self):
-		window = self.graphics_manager.create_window("Alterar Título", "400x600", False)
+		window = self.gui_manager.create_window("Alterar Título", "400x600", False)
 		window.grid_rowconfigure(0, weight=1)
 		window.grid_columnconfigure(0, weight=1)
 
-		main_frame = self.graphics_manager.create_frame(window)
+		main_frame = self.gui_manager.create_frame(window)
 		main_frame.pack(fill=tk.BOTH, expand=True)
 		main_frame.grid_rowconfigure(10, weight=1)
 		main_frame.grid_columnconfigure(0, weight=1)
 
-		id_label = self.graphics_manager.create_label(main_frame, "ID do livro*:")
+		id_label = self.gui_manager.create_label(main_frame, "ID do livro*:")
 		id_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-		id_input = self.graphics_manager.create_entry(main_frame)
+		id_input = self.gui_manager.create_entry(main_frame)
 		id_input.grid(row=0, column=1, pady=10, sticky="ew")
 
-		titulo_label = self.graphics_manager.create_label(main_frame, "Título do livro:")
+		titulo_label = self.gui_manager.create_label(main_frame, "Título do livro:")
 		titulo_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-		titulo_input = self.graphics_manager.create_entry(main_frame)
+		titulo_input = self.gui_manager.create_entry(main_frame)
 		titulo_input.grid(row=1, column=1, pady=10, sticky="ew")
 
-		tipo_label = self.graphics_manager.create_label(main_frame, "Tipo de livro:")
+		tipo_label = self.gui_manager.create_label(main_frame, "Tipo de livro:")
 		tipo_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-		tipo_input = self.graphics_manager.create_entry(main_frame)
+		tipo_input = self.gui_manager.create_entry(main_frame)
 		tipo_input.grid(row=2, column=1, pady=10, sticky="ew")
 
-		data_label = self.graphics_manager.create_label(main_frame, "Data de pub. do livro:")
+		data_label = self.gui_manager.create_label(main_frame, "Data de pub. do livro:")
 		data_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
-		data_input = self.graphics_manager.create_entry(main_frame)
+		data_input = self.gui_manager.create_entry(main_frame)
 		data_input.grid(row=3, column=1, pady=10, sticky="ew")
 
 
-		id_ed_label = self.graphics_manager.create_label(main_frame, "ID da editora:")
+		id_ed_label = self.gui_manager.create_label(main_frame, "ID da editora:")
 		id_ed_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
-		id_ed_input = self.graphics_manager.create_entry(main_frame)
+		id_ed_input = self.gui_manager.create_entry(main_frame)
 		id_ed_input.grid(row=4, column=1, pady=10, sticky="ew")
 
-		preco_label = self.graphics_manager.create_label(main_frame, "Preço do livro:")
+		preco_label = self.gui_manager.create_label(main_frame, "Preço do livro:")
 		preco_label.grid(row=5, column=0, padx=10, pady=10, sticky="w")
-		preco_input = self.graphics_manager.create_entry(main_frame)
+		preco_input = self.gui_manager.create_entry(main_frame)
 		preco_input.grid(row=5, column=1, pady=10, sticky="ew")
 
-		total_venda_label = self.graphics_manager.create_label(main_frame, "Total da venda:")
+		total_venda_label = self.gui_manager.create_label(main_frame, "Total da venda:")
 		total_venda_label.grid(row=6, column=0, padx=10, pady=10, sticky="w")
-		total_venda_input = self.graphics_manager.create_entry(main_frame)
+		total_venda_input = self.gui_manager.create_entry(main_frame)
 		total_venda_input.grid(row=6, column=1, pady=10, sticky="ew")
 
-		royalty_label = self.graphics_manager.create_label(main_frame, "Royalty:")
+		royalty_label = self.gui_manager.create_label(main_frame, "Royalty:")
 		royalty_label.grid(row=7, column=0, padx=10, pady=10, sticky="w")
-		royalty_input = self.graphics_manager.create_entry(main_frame)
+		royalty_input = self.gui_manager.create_entry(main_frame)
 		royalty_input.grid(row=7, column=1, pady=10, sticky="ew")
 
-		med_qtd_vendas_label = self.graphics_manager.create_label(main_frame, "Média da qtd de vendas:")
+		med_qtd_vendas_label = self.gui_manager.create_label(main_frame, "Média da qtd de vendas:")
 		med_qtd_vendas_label.grid(row=8, column=0, padx=10, pady=10, sticky="w")
-		med_qtd_vendas_input = self.graphics_manager.create_entry(main_frame)
+		med_qtd_vendas_input = self.gui_manager.create_entry(main_frame)
 		med_qtd_vendas_input.grid(row=8, column=1, pady=10, sticky="ew")
 
-		observacoes_label = self.graphics_manager.create_label(main_frame, "Observações:")
+		observacoes_label = self.gui_manager.create_label(main_frame, "Observações:")
 		observacoes_label.grid(row=9, column=0, padx=10, pady=10, sticky="w")
-		observacoes_input = self.graphics_manager.create_entry(main_frame)
+		observacoes_input = self.gui_manager.create_entry(main_frame)
 		observacoes_input.grid(row=9, column=1, pady=10, sticky="ew")
 
-		erro_label = self.graphics_manager.create_label(main_frame, "", font=('Arial', 12))
+		erro_label = self.gui_manager.create_label(main_frame, "", font=('Arial', 12))
 		erro_label.config(foreground="red", wraplength=350, justify="left", anchor="w")
 		erro_label.grid(row=10, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
 
-		botoes_frame = self.graphics_manager.create_frame(main_frame, padding=0)
+		botoes_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		botoes_frame.grid(row=11, column=0, columnspan=2, padx=10, pady=10, sticky="se")
 		ok_button = ttk.Button(
 			botoes_frame,
@@ -738,23 +788,23 @@ class MainApplication:
 	#end_def
 
 	def excluir_titulo(self): 
-		window = self.graphics_manager.create_window("Excluir Título", "400x300", False)
+		window = self.gui_manager.create_window("Excluir Título", "400x300", False)
 		window.grid_rowconfigure(0, weight=1)
 		window.grid_columnconfigure(0, weight=1)
 
-		main_frame = self.graphics_manager.create_frame(window)
+		main_frame = self.gui_manager.create_frame(window)
 		main_frame.pack(fill=tk.BOTH, expand=True)
 		main_frame.grid_rowconfigure(4, weight=1)
 		main_frame.grid_columnconfigure(0, weight=1)
 
-		informacao_label = self.graphics_manager.create_label(main_frame, "Informação do livro:")
+		informacao_label = self.gui_manager.create_label(main_frame, "Informação do livro:")
 		informacao_label.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="w")
-		informacao_input = self.graphics_manager.create_entry(main_frame)
+		informacao_input = self.gui_manager.create_entry(main_frame)
 		informacao_input.grid(row=0, column=1, pady=10, sticky="w")
 
-		radio_label = self.graphics_manager.create_label(main_frame, "Escolha o critério de exclusão:")
+		radio_label = self.gui_manager.create_label(main_frame, "Escolha o critério de exclusão:")
 		radio_label.grid(row=1, column=0, padx=(0, 10), pady=10, columnspan=2, sticky="ws")
-		radio_frame = self.graphics_manager.create_frame(main_frame, padding=0)
+		radio_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		radio_var = tk.StringVar(value="deletar_via")
 		radio_values = [("Deletar via ID", "id"), ("Deletar via Título", "titulo")]
 		for text, value in radio_values:
@@ -763,11 +813,11 @@ class MainApplication:
 		#end_for
 		radio_frame.grid(row=2, column=0, columnspan=2, pady=10, sticky="ws")
 
-		erro_label = self.graphics_manager.create_label(main_frame, "")
+		erro_label = self.gui_manager.create_label(main_frame, "")
 		erro_label.config(foreground="red", wraplength=350, justify="left", anchor="w")
 		erro_label.grid(row=3, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
 
-		botoes_frame = self.graphics_manager.create_frame(main_frame, padding=0)
+		botoes_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		botoes_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky="se")
 		ok_button = ttk.Button(
 			botoes_frame,
@@ -803,13 +853,13 @@ class MainApplication:
 	#end_def
 
 	def consultar_titulos(self):
-		window = self.graphics_manager.create_window("Consultar Títulos", "2000x500", True)
-		main_frame = self.graphics_manager.create_frame(window)
+		window = self.gui_manager.create_window("Consultar Títulos", "2000x500", True)
+		main_frame = self.gui_manager.create_frame(window)
 		main_frame.pack(fill=tk.BOTH, expand=True)
 
 		results = self.db_manager.consultar_todas_publicacoes()
 		if not results:
-			no_data_label = self.graphics_manager.create_label(main_frame, "Nenhuma publicação encontrada no banco de dados.")
+			no_data_label = self.gui_manager.create_label(main_frame, "Nenhuma publicação encontrada no banco de dados.")
 			no_data_label.pack(pady=5)
 			return
 		#end_if
@@ -829,43 +879,43 @@ class MainApplication:
 	def consultar_titulo_criterio(self):
 		resultado: list = []
 
-		window = self.graphics_manager.create_window("Consultar Títulos", "2000x500", True)
-		main_frame = self.graphics_manager.create_frame(window)
+		window = self.gui_manager.create_window("Consultar Títulos", "2000x500", True)
+		main_frame = self.gui_manager.create_frame(window)
 		main_frame.pack(fill=tk.BOTH, expand=True)
 
-		input_frame = self.graphics_manager.create_frame(main_frame, 0)
+		input_frame = self.gui_manager.create_frame(main_frame, 0)
 		input_frame.grid(row=0, column=0, columnspan=4, sticky="w")
 
-		id_label = self.graphics_manager.create_label(input_frame, "ID do livro:")
+		id_label = self.gui_manager.create_label(input_frame, "ID do livro:")
 		id_label.grid(row=0, column=0, sticky="ew")
-		id_input = self.graphics_manager.create_entry(input_frame)
+		id_input = self.gui_manager.create_entry(input_frame)
 		id_input.grid(row=0, column=1, padx=10, sticky="ew")
 
-		titulo_label = self.graphics_manager.create_label(input_frame, "Título do livro:")
+		titulo_label = self.gui_manager.create_label(input_frame, "Título do livro:")
 		titulo_label.grid(row=1, column=0, pady=10, sticky="ew")
-		titulo_input = self.graphics_manager.create_entry(input_frame)
+		titulo_input = self.gui_manager.create_entry(input_frame)
 		titulo_input.grid(row=1, column=1, columnspan=3, padx=10, sticky="ew")
 
-		data_frame = self.graphics_manager.create_frame(main_frame, 0)
+		data_frame = self.gui_manager.create_frame(main_frame, 0)
 		data_frame.grid(row=1, column=0, columnspan=4, sticky="w")
 
-		data_label = self.graphics_manager.create_label(data_frame, "Data de publicação: entre")
+		data_label = self.gui_manager.create_label(data_frame, "Data de publicação: entre")
 		data_label.grid(row=0, column=0, sticky="w")
 
-		data_antes_input = self.graphics_manager.create_entry(data_frame)
+		data_antes_input = self.gui_manager.create_entry(data_frame)
 		data_antes_input.grid(row=0, column=1, padx=(10, 0), sticky="w")
 		
-		e_label = self.graphics_manager.create_label(data_frame, "e")
+		e_label = self.gui_manager.create_label(data_frame, "e")
 		e_label.grid(row=0, column=2, padx=10, sticky="w")
 
-		data_depois_input = self.graphics_manager.create_entry(data_frame)
+		data_depois_input = self.gui_manager.create_entry(data_frame)
 		data_depois_input.grid(row=0, column=3, sticky="w")
 
-		erro_label = self.graphics_manager.create_label(main_frame, "")
+		erro_label = self.gui_manager.create_label(main_frame, "")
 		erro_label.config(foreground="red")
 		erro_label.grid(row=2, column=0, columnspan=4)
 
-		botao = self.graphics_manager.create_button(main_frame, "Consultar", command=lambda: self.handle_consultar_titulo_criterio(id_input, titulo_input, data_antes_input, data_depois_input, erro_label, resultado, tree))
+		botao = self.gui_manager.create_button(main_frame, "Consultar", command=lambda: self.handle_consultar_titulo_criterio(id_input, titulo_input, data_antes_input, data_depois_input, erro_label, resultado, tree))
 		botao.grid(row=3, column=0, sticky="w")
 
 		column_names = [i[0] for i in self.db_manager.execute_query("SHOW COLUMNS FROM titulos")]
@@ -911,7 +961,7 @@ class MainApplication:
 	#end_def
 
 	def mostrar_licenca(self):
-		license_window = self.graphics_manager.create_window("Licença", "535x500", True)
+		license_window = self.gui_manager.create_window("Licença", "535x500", True)
 		
 		text_widget = tk.Text(
 			license_window,
@@ -933,7 +983,7 @@ class MainApplication:
 	#end_def
 
 	def mostrar_sobre(self):
-		about_window = self.graphics_manager.create_window("Sobre a Aplicação", "500x400")
+		about_window = self.gui_manager.create_window("Sobre a Aplicação", "500x400")
 		
 		main_frame = ttk.Frame(about_window, padding=20)
 		main_frame.pack(fill=tk.BOTH, expand=True)
