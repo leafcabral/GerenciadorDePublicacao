@@ -1,43 +1,54 @@
 # Gerenciador de Publicações
 
-Projeto de criação de uma aplicação gráfica em Python utilizando a biblioteca *Tkinter* e com conexão ao banco de dados **MySql**.<br>
-Possui a função de gerenciar publicações de livros em uma biblioteca.
-A aplicação utiliza um tema personalizado para o *Tkinter*: [Forest theme for ttk](https://github.com/rdbende/Forest-ttk-theme/tree/master).
+Uma aplicação gráfica em Python para gerenciar livros em uma biblioteca,
+utilizando **Tkinter** para a interface e **MySQL** como banco de dados.
 
-## Sobre Nós
-Esse projeto foi feito pela ASMbleia, sétima (7ª) equipe de desenvolvimento da disciplina de Programação IV do Curso de Informática para Internet, módulo (semestre) 4.<br>
-Os integrantes são:
+## Equipe — ASMbleia
+
+Projeto desenvolvido pela 7ª equipe da disciplina de **Programação IV** —
+Curso de Informática para Internet (IFES Serra, 4º módulo).
+
+**Integrantes:**
 - [Ian Caliel Matos Cabral](https://github.com/calielian)
 - [João Paulo Pipper da Silva](https://github.com/pipperjoaopaulo)
 - [Rafael Cabral Lopes](https://github.com/leafcabral)
 - [Vitor Felberg Barcelos](https://github.com/vtkaxx)
 
-## Formalidades
-Trabalho apresentado à disciplina de Programação IV do Curso de Informática para Internet do IFES campus Serra, como requisito parcial para a avaliação.
-Orientadora: Profa. Alessandra Aguiar Vilarinho.
-
-## Créditos
-- [Tema do aplicativo](https://github.com/rdbende/Forest-ttk-theme)
+**Orientação:** Profa. Alessandra Aguiar Vilarinho 
 
 ## Requisitos
-- **[Python](https://www.python.org/)** ou superior.
-- **[Tkinter](https://docs.python.org/3/library/tkinter.html)** ou superior.
-- **[MySql Connector para Python](https://pypi.org/project/mysql-connector-python/)**
-- **[MySql Server](https://www.mysql.com/)**
 
-## Como instalar
-Não há opção de instalação para esse software.
+- **Python 3.x**
+- **MySQL Server** instalado e configurado
+- **Bibliotecas Python:** `mysql-connector-python `
 
-## Como usar
-Windows:
-```console
-python src/main.py
-```
-Linux:
-```console
-python3 src/main.py
-```
+## Como Executar
+
+1. Clone este repositório (ou baixe os arquivos).
+2. Certifique-se de ter o **MySQL** rodando e configurado.
+3. Instale as dependências:
+	```bash
+	pip install mysql-connector-python
+	```
+4. Execute o programa:
+	 - **Windows:**
+		```bash
+		python src/main.py
+		```
+	 - **Linux:**
+		```bash
+		python3 src/main.py
+		```
+
+## Formalidades
+
+Trabalho apresentado à disciplina de **Programação IV** do Curso de Informática
+para Internet do **IFES campus Serra**, como requisito parcial para avaliação.
+
+A aplicação utiliza um tema personalizado para o *Tkinter*:
+[Forest theme for ttk](https://github.com/rdbende/Forest-ttk-theme/tree/master).
 
 ## Licença
 
-Este projeto está sob a Licença Pública Geral GNU versão 3 (GPL v3.0).
+Este projeto está sob a Licença Pública Geral GNU versão 3 (GPL v3.0). <br>
+Consulte o arquivo [LICENSE](LICENSE) para mais informações.
