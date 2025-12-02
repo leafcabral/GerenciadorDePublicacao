@@ -37,7 +37,7 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 	#end_def
 
 	def connect(self):
-		self.connection = mysql.connector.connect(
+		self.connection = mysql.connector.connect( # type: ignore
 			host=self.host,
 			user=self.user,
 			password=self.password
@@ -51,9 +51,9 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 
 		if not cursor.fetchone():
 			with open(f"res/sql/BD{self.database.capitalize()}.sql", "r", encoding="utf-8") as script:
-				cursor.execute(script.read(), multi=True)
+				cursor.execute(script.read(), multi=True) # type: ignore
 
-		self.connection.database = self.database
+		self.connection.database = self.database# type: ignore
 	#end_def
 
 	def disconnect(self) -> None:
@@ -63,7 +63,7 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 	#end_def
 
 	def execute_query(self, query: str, params: tuple = ()) -> list:
-		cursor = self.connection.cursor()
+		cursor = self.connection.cursor()# type: ignore
 		cursor.execute(query, params)
 
 		query_clause = query.strip().upper()
@@ -72,7 +72,7 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 			cursor.close()
 			return result
 		else:
-			self.connection.commit()
+			self.connection.commit()# type: ignore
 			cursor.close()
 			return []
 	#end_def
@@ -110,10 +110,12 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 		if not alteracao:
 			return False
 
-		query = f"UPDATE titulos SET {', '.join(alteracao)} WHERE ID_TITULO = " + id
-		check_query = "SELECT * FROM titulos WHERE ID_TITULO = " + id
+		query = f"UPDATE titulos SET {', '.join(alteracao)} WHERE ID_TITULO = %s"
+		check_query = "SELECT * FROM titulos WHERE ID_TITULO = %s"
+		valores.append(id)
 
-		if self.execute_query(check_query):
+		print(query)
+		if self.execute_query(check_query, (id, )):
 			self.execute_query(query, tuple(valores))
 			return True
 		else:
@@ -122,12 +124,12 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 
 	def deletar_publicacao(self, informacao: str, pelo_id: bool) -> bool:
 		self.execute_query("SET FOREIGN_KEY_CHECKS = 0")
-		where_clause = f"ID_TITULO = '{informacao.strip()}'" if pelo_id else f"TITULO_LIVRO = {informacao.strip()}'"
+		where_clause = "ID_TITULO = %s" if pelo_id else "TITULO_LIVRO = %s" 
 		query = f"DELETE FROM titulos WHERE {where_clause}"
 		check_query = f"SELECT * FROM titulos WHERE {where_clause}"
 
-		if self.execute_query(check_query):
-			self.execute_query(query)
+		if self.execute_query(check_query, (informacao, )):
+			self.execute_query(query, (informacao, ))
 			self.execute_query("SET FOREIGN_KEY_CHECKS = 1")
 			return True
 		else:
@@ -145,15 +147,26 @@ Utilize os seguintes comandos para instala-lo, a dependender do seu sistema oper
 		NOME: str = criterio[1]
 		DATA: list = criterio[2]
 
-		query: str = "SELECT * FROM titulos WHERE "
+		conditions: list = []
+		params: list = []
 
-		if len(ID) > 0: query += f"ID_TITULO = {ID},"
-		if len(NOME) > 0: query += f" TITULO_LIVRO = {NOME},"
-		if len(DATA[0]) > 0: query += f" DATA_PUBLICACAO BETWEEN {DATA[0]} AND {DATA[1]},"
+		if ID:
+			conditions.append("ID_TITULO = %s")
+			params.append(ID)
+		if NOME:
+			conditions.append("TITULO_LIVRO = %s")
+			params.append(NOME)
+		if DATA[0] and DATA[1]:
+			conditions.append("DATA_PUBLICACAO BETWEEN %s AND %s")
+			params.append(DATA[0])
+			params.append(DATA[1])
 
-		query = query[:-1]
+		if not conditions:
+			return []
+		
+		query = "SELECT * FROM titulos WHERE " + " AND ".join(conditions)
 
-		return self.execute_query(query)
+		return self.execute_query(query, tuple(params))
 	#end_def
 #end_class
 
@@ -176,6 +189,7 @@ class GraphicsManager:
 		style = ttk.Style()
 		style.configure('.', font=('Segoe UI', 16), background='#f0f0f0')
 		style.configure('Treeview', font=('Segoe UI', 10))
+		style.configure('Radiobutton', font=('Segoe UI', 10))
 
 		self.setup_navbar()
 		self.setup_main_screen()
@@ -393,7 +407,6 @@ class MainApplication:
 			'Usuário': 'Nenhum',
 			'Banco de Dados': 'Nenhum'
 		}
-		self.db_manager = None
 		self.gui_manager = GraphicsManager(self.root, self)
 
 		self.request_auth()
@@ -430,7 +443,6 @@ class MainApplication:
 		)
 		botao.pack(side=tk.RIGHT, padx=(5,0))
 	#end_def
-
 	def verificar_user_senha(self, user_input, senha_input, window):
 		usuario: str = user_input.get("1.0", "end-1c")
 		senha: str = senha_input.get("1.0", "end-1c")
@@ -471,25 +483,17 @@ class MainApplication:
 	#end_def
 
 	def verificar_formatacao_data(self, data: str) -> bool:
-		i: int = 1
-		char_formatacao: list = ['-', ' ', '/']
+		from datetime import datetime
 
-		if len(data) != 10:
-			return False
+		formatos_aceitos = ['%Y-%m-%d', '%Y %m %d', '%Y/%m/%d']
 
-		# formato correto: yyyy-mm-dd, yyyy mm dd, yyyy/mm/dd
-		for char in data:
-			if char.isnumeric() and (i <= 4 or (i >= 6 and i < 8) or i >= 9):
-				i += 1
-			elif char in char_formatacao and (i == 5 or i == 8):
-				i += 1
-			else:
-				return False
-		
-		if int(data[:4]) == 0 or (int(data[5:7]) == 0 or int(data[5:7]) > 12) or (int(data[9:]) == 0 or int(data[9:]) > 31):
-			return False
-		
-		return True
+		for formato in formatos_aceitos:
+			try:
+				datetime.strptime(data, formato)
+				return True
+			except ValueError:
+				continue
+		return False
 	#end_def
 
 	def conectar_banco(self):
@@ -556,10 +560,6 @@ class MainApplication:
 		observacoes_input = self.gui_manager.create_entry(main_frame)
 		observacoes_input.grid(row=9, column=1, pady=10, sticky="ew")
 
-		erro_label = self.gui_manager.create_label(main_frame, "", font=('Arial', 12))
-		erro_label.config(foreground="red", wraplength=350, justify="left", anchor="w")
-		erro_label.grid(row=10, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
-
 		botoes_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		botoes_frame.grid(row=11, column=0, columnspan=2, padx=10, pady=10, sticky="se")
 		ok_button = ttk.Button(
@@ -576,7 +576,6 @@ class MainApplication:
 				royalty_input,
 				med_qtd_vendas_input,
 				observacoes_input,
-				erro_label,
 				window
 			)
 		)
@@ -584,7 +583,7 @@ class MainApplication:
 		cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=window.destroy)
 		cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
 	#end_def
-	def handle_inserir_titulo(self, id_input, titulo_input, tipo_input, data_input, id_ed_input, preco_input, total_venda_input, royalty_input, med_qtd_vendas_input, observacoes_input, erro_label, window):
+	def handle_inserir_titulo(self, id_input, titulo_input, tipo_input, data_input, id_ed_input, preco_input, total_venda_input, royalty_input, med_qtd_vendas_input, observacoes_input, window):
 		ID = id_input.get("1.0", "end-1c").strip()
 		TITULO = titulo_input.get("1.0", "end-1c").strip()
 		TIPO = tipo_input.get("1.0", "end-1c").strip()
@@ -596,14 +595,11 @@ class MainApplication:
 		MED_QTD_VENDAS = med_qtd_vendas_input.get("1.0", "end-1c").strip()
 		OBSERVACOES = observacoes_input.get("1.0", "end-1c").strip()
 
-		if not ID and not TITULO and not TIPO and not DATA and not ID_ED and not PRECO and not TOTAL_VENDA and not ROYALTY and not MED_QTD_VENDAS and not OBSERVACOES:
-			erro_label.config(text="Dados inválidos: todos os campos estão vazios.")
-			return
-		elif not ID or not TITULO or not TIPO or not DATA:
-			erro_label.config(text="Dados inválidos: há campos obrigatórios vazios.")
+		if not ID or not TITULO or not TIPO or not DATA:
+			messagebox.showwarning("Campos obrigatórios", "Dados inválidos: há campos obrigatórios vazios.")
 			return
 		elif not self.verificar_formatacao_data(DATA):
-			erro_label.config(text="Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
+			messagebox.showerror("Formato de data inválido", "Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
 			return
 		
 		data_formatted = DATA.replace(' ', '-').replace('/', '-')
@@ -620,7 +616,7 @@ class MainApplication:
 				"MEDIA_QUANT_VENDAS" : MED_QTD_VENDAS,
 				"OBSERVACOES" : OBSERVACOES
 			}):
-			erro_label.config(text="Publicação inserida com sucesso!", foreground="green")
+			messagebox.showinfo("Sucesso", "Publicação inserida com sucesso!")
 			id_input.delete("1.0", tk.END)
 			titulo_input.delete("1.0", tk.END)
 			tipo_input.delete("1.0", tk.END)
@@ -632,7 +628,8 @@ class MainApplication:
 			med_qtd_vendas_input.delete("1.0", tk.END)
 			observacoes_input.delete("1.0", tk.END)
 		else:
-			erro_label.config(text="Erro ao inserir publicação: ID já existe no banco de dados.")
+			messagebox.showerror("Erro", "Erro ao inserir publicação: ID já existe no banco de dados.")
+
 	#end_def
 
 	def alterar_titulo(self):
@@ -696,10 +693,6 @@ class MainApplication:
 		observacoes_input = self.gui_manager.create_entry(main_frame)
 		observacoes_input.grid(row=9, column=1, pady=10, sticky="ew")
 
-		erro_label = self.gui_manager.create_label(main_frame, "", font=('Arial', 12))
-		erro_label.config(foreground="red", wraplength=350, justify="left", anchor="w")
-		erro_label.grid(row=10, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
-
 		botoes_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		botoes_frame.grid(row=11, column=0, columnspan=2, padx=10, pady=10, sticky="se")
 		ok_button = ttk.Button(
@@ -716,7 +709,6 @@ class MainApplication:
 				royalty_input,
 				med_qtd_vendas_input,
 				observacoes_input,
-				erro_label,
 				window
 			)
 		)
@@ -724,7 +716,7 @@ class MainApplication:
 		cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=window.destroy)
 		cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
 	#end_def
-	def handle_alterar_titulo(self, id_input, titulo_input, tipo_input, data_input, id_ed_input, preco_input, total_venda_input, royalty_input, med_qtd_vendas_input, observacoes_input, erro_label, window):
+	def handle_alterar_titulo(self, id_input, titulo_input, tipo_input, data_input, id_ed_input, preco_input, total_venda_input, royalty_input, med_qtd_vendas_input, observacoes_input, window):
 		ID = id_input.get("1.0", "end-1c").strip()
 		TITULO = titulo_input.get("1.0", "end-1c").strip()
 		TIPO = tipo_input.get("1.0", "end-1c").strip()
@@ -736,14 +728,11 @@ class MainApplication:
 		MED_QTD_VENDAS = med_qtd_vendas_input.get("1.0", "end-1c").strip()
 		OBSERVACOES = observacoes_input.get("1.0", "end-1c").strip()
 
-		if not ID and not TITULO and not TIPO and not DATA and not ID_ED and not PRECO and not TOTAL_VENDA and not ROYALTY and not MED_QTD_VENDAS and not OBSERVACOES:
-			erro_label.config(text="Dados inválidos: todos os campos estão vazios.")
-			return
-		elif not ID:
-			erro_label.config(text="Digite o ID do livro que deseja alterar.")
+		if not ID:
+			messagebox.showwarning("Campos obrigatórios", "Dados inválidos: há campos obrigatórios vazios.")
 			return
 		elif DATA and not self.verificar_formatacao_data(DATA):
-			erro_label.config(text="Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
+			messagebox.showerror("Formato de data inválido", "Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
 			return
 		
 		data_formatted = DATA.replace(' ', '-').replace('/', '-')
@@ -759,7 +748,7 @@ class MainApplication:
 			"MEDIA_QUANT_VENDAS" : MED_QTD_VENDAS,
 			"OBSERVACOES" : OBSERVACOES
 		}, ID):
-			erro_label.config(text="Publicação alterada com sucesso!", foreground="green")
+			messagebox.showinfo("Sucesso", "Publicação alterada com sucesso!")
 			id_input.delete("1.0", tk.END)
 			titulo_input.delete("1.0", tk.END)
 			tipo_input.delete("1.0", tk.END)
@@ -771,7 +760,7 @@ class MainApplication:
 			med_qtd_vendas_input.delete("1.0", tk.END)
 			observacoes_input.delete("1.0", tk.END)
 		else:
-			erro_label.config(text="Erro ao alterar publicação: verifique se o ID existe no banco de dados.", foreground="red")
+			messagebox.showerror("Erro", "Erro ao alterar publicação: verifique se ID existe no banco de dados.")
 	#end_def
 
 	def excluir_titulo(self): 
@@ -795,14 +784,10 @@ class MainApplication:
 		radio_var = tk.StringVar(value="deletar_via")
 		radio_values = [("Deletar via ID", "id"), ("Deletar via Título", "titulo")]
 		for text, value in radio_values:
-			radio_button = ttk.Radiobutton(radio_frame, text=text, variable=radio_var, value=value)
+			radio_button = ttk.Radiobutton(radio_frame, text=text, variable=radio_var, value=value, cursor="hand2")
 			radio_button.pack(side=tk.RIGHT)
 		#end_for
 		radio_frame.grid(row=2, column=0, columnspan=2, pady=10, sticky="ws")
-
-		erro_label = self.gui_manager.create_label(main_frame, "")
-		erro_label.config(foreground="red", wraplength=350, justify="left", anchor="w")
-		erro_label.grid(row=3, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
 
 		botoes_frame = self.gui_manager.create_frame(main_frame, padding=0)
 		botoes_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky="se")
@@ -811,32 +796,31 @@ class MainApplication:
 			text="Ok",
 			command=lambda: self.handle_excluir_titulo(
 				informacao_input,
-				radio_var,
-				erro_label
+				radio_var
 			)
 		)
 		ok_button.pack(side=tk.RIGHT, padx=(5,0))
 		cancelar_button = ttk.Button(botoes_frame, text="Cancelar", command=window.destroy)
 		cancelar_button.pack(side=tk.RIGHT, padx=(0,5))
 	#end_def
-	def handle_excluir_titulo(self, informacao_input, radio_var, erro_label):
+	def handle_excluir_titulo(self, informacao_input, radio_var):
 		INFORMACAO = informacao_input.get("1.0", "end-1c").strip()
 		CRITERIO = radio_var.get()
 
 		if CRITERIO == "deletar_via":
-			erro_label.config(text="Primeiro, selecione o critério de exclusão.", foreground="red")
+			messagebox.showwarning("Critério não selecionado", "Primeiro, selecione o critério de exclusão.")
 			return
 		elif INFORMACAO == "":
-			erro_label.config(text="Digite um ID/Título antes de excluir!", foreground="red")
+			messagebox.showwarning("Informação ausente", "Digite um ID/Título antes de excluir!")
 			return
 
 		PELO_ID = CRITERIO == "id"
 
 		if self.db_manager.deletar_publicacao(INFORMACAO, PELO_ID):
-			erro_label.config(text="Publicação excluída com sucesso!", foreground="green")
+			messagebox.showinfo("Sucesso", "Publicação excluída com sucesso!")
 			informacao_input.delete("1.0", tk.END)
 		else:
-			erro_label.config(text="Erro ao excluir publicação: verifique se o ID/Título existe no banco de dados.", foreground="red")
+			messagebox.showerror("Erro", "Erro ao excluir publicação: verifique se o ID/Título existe no banco de dados.")
 	#end_def
 
 	def consultar_titulos(self):
@@ -898,11 +882,9 @@ class MainApplication:
 		data_depois_input = self.gui_manager.create_entry(data_frame)
 		data_depois_input.grid(row=0, column=3, sticky="w")
 
-		erro_label = self.gui_manager.create_label(main_frame, "")
-		erro_label.config(foreground="red")
-		erro_label.grid(row=2, column=0, columnspan=4)
-
-		botao = self.gui_manager.create_button(main_frame, "Consultar", command=lambda: self.handle_consultar_titulo_criterio(id_input, titulo_input, data_antes_input, data_depois_input, erro_label, resultado, tree))
+		botao = self.gui_manager.create_button(
+			main_frame, "Consultar",
+			command=lambda: self.handle_consultar_titulo_criterio(id_input, titulo_input, data_antes_input, data_depois_input, resultado, tree))
 		botao.grid(row=3, column=0, sticky="w")
 
 		column_names = [i[0] for i in self.db_manager.execute_query("SHOW COLUMNS FROM titulos")]
@@ -915,32 +897,44 @@ class MainApplication:
 
 		window.geometry(f"{min(2000, (len(column_names) * 150) + 50)}x500")
 	#end_def
-	def handle_consultar_titulo_criterio(self, id_input, nome_input, data_antes_input, data_depois_input, erro_label, resultado, tree):
+	def handle_consultar_titulo_criterio(self, id_input, nome_input, data_antes_input, data_depois_input, resultado, tree):
 		ID: str = id_input.get("1.0", "end-1c").strip()
 		NOME: str = nome_input.get("1.0", "end-1c").strip()
-		DATA_ANTES: list = data_antes_input.get("1.0", "end-1c").strip()
-		DATA_DEPOIS: list = data_depois_input.get("1.0", "end-1c").strip()
+		DATA_ANTES: str = data_antes_input.get("1.0", "end-1c").strip()
+		DATA_DEPOIS: str = data_depois_input.get("1.0", "end-1c").strip()
 
 		if not ID and not NOME and not DATA_ANTES and not DATA_DEPOIS:
-			erro_label.config(text="Todos os campos estão vazios.")
+			messagebox.showwarning("Ebtrada invalida", "Todos os campos estão vazios")
 			return
-		elif DATA_ANTES and DATA_DEPOIS and (self.verificar_formatacao_data(data_antes_input) and self.verificar_formatacao_data(data_depois_input)):
-			erro_label.config(text="Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
+		elif (DATA_ANTES and not self.verificar_formatacao_data(DATA_ANTES)) or \
+		(DATA_DEPOIS and not self.verificar_formatacao_data(DATA_DEPOIS)):
+			messagebox.showwarning("Ebtrada invalida", "Verifique se a formatação da data está correta: yyyy-mm-dd, yyyy mm dd ou yyyy/mm/dd.\nOu então verifique se digitou ano, mês ou dia válido.")
 			return
 		
-		data_antes_formatada: str = DATA_ANTES.replace(' ', '-').replace('/', '-')
-		data_depois_formatada: str = DATA_DEPOIS.replace(' ', '-').replace('/', '-')
+		data_antes_formatada: str = ""
+		data_depois_formatada: str = ""
+
+		if DATA_ANTES and self.verificar_formatacao_data(DATA_ANTES):
+			data_antes_formatada = DATA_ANTES.replace(' ', '-').replace('/', '-')
+		if DATA_DEPOIS and self.verificar_formatacao_data(DATA_DEPOIS):
+			data_depois_formatada = DATA_DEPOIS.replace(' ', '-').replace('/', '-')
 
 		criterio: list = [ID, NOME, [data_antes_formatada, data_depois_formatada]]
 
-		resultado = self.db_manager.consultar_por_criterio(criterio)
+		try:
+			resultado = self.db_manager.consultar_por_criterio(criterio)
 
-		if not resultado:
-			erro_label.config(text="Nenhuma publicação encontrada no banco de dados.", foreground="red")
-			return
-		
-		for row in resultado:
-			tree.insert('', tk.END, values=row)
+			for item in tree.get_children():
+				tree.delete(item)
+
+			if not resultado:
+				messagebox.showerror("Erro", "Nenhuma publicação encontrada no banco de dados.")
+				return
+			
+			for row in resultado:
+				tree.insert('', tk.END, values=row)
+		except Exception as e:
+			messagebox.showerror("Erro Maluco", "Houve algum erro desconhecido na consulta.")
 	#end_def
 
 	def mostrar_ajuda(self):
@@ -977,7 +971,7 @@ class MainApplication:
 
 		icon = tk.PhotoImage(file="res/icon.png").subsample(16)
 		icon_label = ttk.Label(main_frame, image=icon)
-		icon_label.image = icon
+		icon_label.image = icon # type: ignore
 		icon_label.pack(pady=10)
 
 		ttk.Label(
