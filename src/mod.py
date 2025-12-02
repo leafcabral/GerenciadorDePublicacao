@@ -365,6 +365,9 @@ Desenvolvido para atender às necessidades de editoras, bibliotecas e profission
 			window.maxsize(width, height)
 
 			window.resizable(False, False)
+
+		window.lift()
+		window.grab_set()
 		return window
 	#end_def
 	def create_frame(self, parent, padding: int = 10) -> ttk.Frame:
@@ -398,8 +401,6 @@ class MainApplication:
 
 	def request_auth(self):
 		input_user_senha = self.gui_manager.create_window("Conectar ao banco de dado", "400x200")
-		input_user_senha.attributes('-topmost', True)
-		input_user_senha.grab_set() 
 
 		main_frame = self.gui_manager.create_frame(input_user_senha)
 		main_frame.pack(fill=tk.BOTH, expand=True)
@@ -435,16 +436,10 @@ class MainApplication:
 		senha: str = senha_input.get("1.0", "end-1c")
 
 		if not usuario or not senha:
-			window.grab_release()
-			window.attributes('-topmost', False)
-
 			messagebox.showwarning(
 				"Campos vazios",
 				"Por favor, preencha ambos os campos de usuário e senha."
 			)
-
-			window.attributes('-topmost', True)
-			window.grab_set() 
 			return
 
 		self.db_manager = DatabaseManager(
@@ -462,8 +457,6 @@ class MainApplication:
 			self.status['Conectado'] = "✔"
 			self.gui_manager.refresh_statusbar()
 
-			window.grab_release()
-			window.attributes('-topmost', False)
 			messagebox.showinfo(
 				"Conectado com sucesso",
 				"Conexão ao banco de dados realizada com sucesso!"
@@ -471,16 +464,10 @@ class MainApplication:
 
 			window.destroy()
 		except:
-			window.grab_release()
-			window.attributes('-topmost', False)
-
 			messagebox.showerror(
 				"Erro de autenticação",
 				"Não foi possível conectar ao banco de dados com o usuário e senha fornecidos."
 			)
-
-			window.attributes('-topmost', True)
-			window.grab_set() 
 	#end_def
 
 	def verificar_formatacao_data(self, data: str) -> bool:
